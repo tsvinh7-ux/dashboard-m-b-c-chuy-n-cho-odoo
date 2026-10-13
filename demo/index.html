@@ -1,0 +1,1167 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>DMAG Dental Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: bảng điều khiển phòng khám — thanh điều hướng bên trái, hàng bộ lọc phía trên, dải KPI rồi lưới biểu đồ 2 cột */
+:root {
+  --bg: #f2f5f6;
+  --panel: #ffffff;
+  --ink: #0f1b21;
+  --ink-2: #485861;
+  --muted: #76838a;
+  --line: #dfe6e9;
+  --grid: #e9eef0;
+  --base: #c3ced3;
+  --accent: #0a6c75;
+  --accent-ink: #ffffff;
+  --wash: rgba(10, 108, 117, 0.08);
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300;
+  --seq: #1c5cab;
+  --good: #0ca30c; --warn: #fab219; --bad: #d03b3b;
+  --good-text: #006300; --bad-text: #b42f2f;
+  --shadow: 0 1px 2px rgba(15, 27, 33, 0.06);
+  --font-ui: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b1013; --panel: #131a1e; --ink: #e6ecee; --ink-2: #b3bfc4;
+    --muted: #869399; --line: #233037; --grid: #1c262b; --base: #34444c;
+    --accent: #47b6bd; --accent-ink: #062226; --wash: rgba(71, 182, 189, 0.12);
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300;
+    --seq: #6da7ec; --good-text: #0ca30c; --bad-text: #e66767;
+    --shadow: none; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0b1013; --panel: #131a1e; --ink: #e6ecee; --ink-2: #b3bfc4;
+  --muted: #869399; --line: #233037; --grid: #1c262b; --base: #34444c;
+  --accent: #47b6bd; --accent-ink: #062226; --wash: rgba(71, 182, 189, 0.12);
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300;
+  --seq: #6da7ec; --good-text: #0ca30c; --bad-text: #e66767;
+  --shadow: none; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-ui); font-size: 14px; line-height: 1.45; }
+button, select, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.app { display: grid; grid-template-columns: 232px minmax(0, 1fr); min-height: 100vh; }
+.rail { background: var(--panel); border-right: 1px solid var(--line); padding-block: 20px; padding-inline: 14px; display: flex; flex-direction: column; gap: 20px; position: sticky; top: env(safe-area-inset-top, 0px); height: 100vh; }
+.brand { display: flex; align-items: center; gap: 10px; padding-inline: 8px; }
+.brand-mark { width: 30px; height: 30px; flex: none; }
+.brand b { display: block; font-size: 15px; letter-spacing: 0.01em; }
+.brand span { display: block; font-size: 11.5px; color: var(--muted); }
+.nav { display: flex; flex-direction: column; gap: 2px; }
+.nav a { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: var(--ink-2); text-decoration: none; font-weight: 500; white-space: nowrap; }
+.nav a:hover { background: var(--wash); color: var(--ink); }
+.nav a[aria-current="page"] { background: var(--accent); color: var(--accent-ink); }
+.nav svg { width: 17px; height: 17px; flex: none; }
+.rail-foot { margin-top: auto; font-size: 12px; color: var(--muted); padding-inline: 8px; display: grid; gap: 4px; }
+
+#view { display: flex; flex-direction: column; gap: 14px; }
+main { min-width: 0; padding-block: 20px 48px; padding-inline: 28px; display: flex; flex-direction: column; gap: 18px; }
+.topbar { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px; }
+.topbar h1 { margin: 0; font-size: 22px; font-weight: 700; text-wrap: balance; }
+.topbar .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.field { display: flex; flex-direction: column; gap: 3px; }
+.field label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 600; }
+select, input[type="date"] { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; min-height: 36px; max-width: 100%; }
+select:hover, input[type="date"]:hover { border-color: var(--base); }
+.seg { display: inline-flex; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 2px; flex-wrap: wrap; }
+.seg button { border: 0; background: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; color: var(--ink-2); font-weight: 500; font-size: 13px; }
+.seg button:hover { background: var(--wash); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.custom-range { display: flex; gap: 6px; align-items: center; }
+.custom-range span { color: var(--muted); }
+
+.notice { display: flex; gap: 10px; align-items: flex-start; background: var(--wash); border: 1px solid var(--line); border-radius: var(--r); padding: 10px 14px; font-size: 13px; color: var(--ink-2); }
+.notice b { color: var(--ink); }
+
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.kpi { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.kpi .lab { font-size: 12.5px; color: var(--ink-2); font-weight: 500; }
+.kpi .val { font-size: 24px; font-weight: 700; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kpi.hero .val { font-size: 30px; }
+.kpi .unit { font-size: 13px; font-weight: 500; color: var(--muted); margin-left: 3px; }
+.delta { font-size: 12.5px; font-weight: 600; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 4px; }
+.delta.up { color: var(--good-text); }
+.delta.down { color: var(--bad-text); }
+.delta.flat { color: var(--muted); }
+.delta .vs { color: var(--muted); font-weight: 400; }
+
+.grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); padding: 16px 18px; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.span-12 { grid-column: span 12; } .span-8 { grid-column: span 8; } .span-7 { grid-column: span 7; }
+.span-6 { grid-column: span 6; } .span-5 { grid-column: span 5; } .span-4 { grid-column: span 4; }
+.card-h { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.card-h h2 { margin: 0; font-size: 15px; font-weight: 600; text-wrap: balance; }
+.card-h .desc { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+.tgl { border: 1px solid var(--line); background: none; border-radius: 6px; padding: 3px 9px; font-size: 12px; color: var(--ink-2); cursor: pointer; white-space: nowrap; }
+.tgl:hover { background: var(--wash); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--ink-2); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.legend i.ln { height: 3px; width: 14px; border-radius: 2px; vertical-align: 3px; }
+.chart { position: relative; width: 100%; min-width: 0; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart text { fill: var(--muted); font-size: 11px; font-family: var(--font-ui); }
+.chart .lbl { fill: var(--ink-2); font-size: 11.5px; font-weight: 500; }
+.chart .val { fill: var(--ink); font-size: 11.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.chart .gridl { stroke: var(--grid); stroke-width: 1; }
+.chart .basel { stroke: var(--base); stroke-width: 1; }
+.chart .hit { fill: transparent; cursor: default; }
+.chart .mark { transition: opacity 0.12s; }
+.chart .dim .mark { opacity: 0.45; }
+.chart .dim .mark.on { opacity: 1; }
+
+.tablewrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td.wrap { white-space: normal; min-width: 180px; }
+th { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600; position: sticky; top: 0; background: var(--panel); }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+tr:hover td { background: var(--wash); }
+tr.sel td { background: var(--wash); font-weight: 600; }
+.bar-cell { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+.bar-cell .b { height: 8px; border-radius: 0 4px 4px 0; background: var(--s1); min-width: 2px; }
+.bar-cell .bt { width: 72px; display: flex; }
+
+.status { display: inline-flex; align-items: flex-start; gap: 6px; font-weight: 500; }
+.status svg { width: 15px; height: 15px; flex: none; margin-top: 2px; }
+.pill { display: inline-block; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); font-size: 12px; color: var(--ink-2); }
+
+.flow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.flow .st { border: 1px solid var(--line); border-radius: 8px; padding: 12px; background: var(--bg); display: flex; flex-direction: column; gap: 4px; position: relative; }
+.flow .st b { font-size: 13px; }
+.flow .st span { font-size: 12px; color: var(--ink-2); }
+.flow .st em { font-style: normal; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+
+.defs { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px 24px; margin: 0; }
+.defs div { display: flex; flex-direction: column; gap: 2px; }
+.defs dt { font-weight: 600; font-size: 13px; }
+.defs dd { margin: 0; color: var(--ink-2); font-size: 12.5px; max-width: 60ch; }
+
+.tip { position: fixed; z-index: 50; pointer-events: none; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.14); padding: 8px 10px; font-size: 12.5px; min-width: 140px; max-width: 280px; }
+.tip .t { color: var(--muted); font-size: 11.5px; margin-bottom: 4px; }
+.tip .r { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.tip .r .k { display: flex; align-items: center; gap: 6px; color: var(--ink-2); }
+.tip .r .k i { width: 12px; height: 3px; border-radius: 2px; display: inline-block; }
+.tip .r b { font-variant-numeric: tabular-nums; }
+.empty { color: var(--muted); padding: 24px 0; text-align: center; }
+
+@media (max-width: 1100px) {
+  .span-8, .span-7, .span-6, .span-5, .span-4 { grid-column: span 12; }
+  .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 860px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .rail { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; height: auto; flex-direction: row; align-items: center; padding-block: 8px; padding-inline: 12px; border-right: 0; border-bottom: 1px solid var(--line); gap: 12px; }
+  .brand div, .rail-foot { display: none; }
+  .nav { flex-direction: row; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+  .nav a { padding: 7px 10px; }
+  .nav a .lt { display: none; }
+  .nav a[aria-current="page"] .lt { display: inline; }
+  main { padding-inline: 16px; }
+  .flow { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="app">
+  <aside class="rail">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--accent)"/><path d="M10 9.5c-2.4 0-3.6 2-3.3 4.6.3 2.6 1.4 4 1.9 6.6.4 2 .7 3.8 1.9 3.8 1.5 0 1.4-3.6 2.4-5 .5-.8 1-.9 1.6-.9h1.8c.6 0 1.1.1 1.6.9 1 1.4.9 5 2.4 5 1.2 0 1.5-1.8 1.9-3.8.5-2.6 1.6-4 1.9-6.6.3-2.6-.9-4.6-3.3-4.6-2.1 0-2.9 1.2-5.4 1.2S12.1 9.5 10 9.5z" fill="var(--accent-ink)"/></svg>
+      <div><b>DMAG Insight</b><span>Dashboard phòng khám nha khoa</span></div>
+    </div>
+    <nav class="nav" id="nav" aria-label="Trang"></nav>
+    <div class="rail-foot">
+      <span>Bản demo · dữ liệu mẫu</span>
+      <span>Cập nhật đến 13/10/2026</span>
+    </div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div>
+        <h1 id="pageTitle">Tổng quan</h1>
+        <div class="sub" id="pageSub"></div>
+      </div>
+      <div class="filters">
+        <div class="field">
+          <label for="fClinic">Phòng khám</label>
+          <select id="fClinic"></select>
+        </div>
+        <div class="field">
+          <label>Thời gian</label>
+          <div class="seg" id="fPreset" role="group" aria-label="Khoảng thời gian"></div>
+        </div>
+        <div class="field">
+          <label for="fFrom">Tùy chọn</label>
+          <div class="custom-range">
+            <input type="date" id="fFrom" min="2025-10-01" max="2026-10-13">
+            <span>→</span>
+            <input type="date" id="fTo" min="2025-10-01" max="2026-10-13">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notice" role="note">
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" style="flex:none;margin-top:2px"><circle cx="8" cy="8" r="7" fill="none" stroke="var(--accent)" stroke-width="1.6"/><path d="M8 7v4.2M8 4.6v.1" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <div><b>Bản demo với dữ liệu giả lập.</b> 8 phòng khám mẫu, số liệu sinh ngẫu nhiên từ 01/10/2025 đến 13/10/2026 theo đúng mô hình dữ liệu chuẩn của DMAG. Tên phòng khám, bác sĩ và số liệu đều không có thật.</div>
+    </div>
+
+    <section id="view" aria-live="polite"></section>
+  </main>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+(function () {
+"use strict";
+
+/* ===================== Tiện ích ===================== */
+const DAY = 864e5;
+const START = Date.UTC(2025, 9, 1);
+const TODAY = (Date.UTC(2026, 9, 13) - START) / DAY;
+const NDAYS = TODAY + 1;
+const dateOf = i => new Date(START + i * DAY);
+const idxOf = s => Math.round((Date.parse(s + "T00:00:00Z") - START) / DAY);
+const isoOf = i => dateOf(i).toISOString().slice(0, 10);
+const dm = i => { const d = dateOf(i); return pad(d.getUTCDate()) + "/" + pad(d.getUTCMonth() + 1); };
+const dmy = i => { const d = dateOf(i); return pad(d.getUTCDate()) + "/" + pad(d.getUTCMonth() + 1) + "/" + d.getUTCFullYear(); };
+const pad = n => (n < 10 ? "0" : "") + n;
+const wdOf = i => (dateOf(i).getUTCDay() + 6) % 7; // 0 = Thứ 2
+const WD = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
+
+function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const R = rng(20261013);
+const rand = (a, b) => a + (b - a) * R();
+const randi = (a, b) => Math.floor(rand(a, b + 1));
+function poisson(l) {
+  if (l <= 0) return 0;
+  if (l > 40) return Math.max(0, Math.round(l + Math.sqrt(l) * gauss()));
+  const L = Math.exp(-l); let k = 0, p = 1;
+  do { k++; p *= R(); } while (p > L);
+  return k - 1;
+}
+function gauss() { let u = 0, v = 0; while (u === 0) u = R(); while (v === 0) v = R(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+function pick(w) { let s = 0; for (const x of w) s += x; let r = R() * s; for (let i = 0; i < w.length; i++) { r -= w[i]; if (r <= 0) return i; } return w.length - 1; }
+
+const nf = new Intl.NumberFormat("vi-VN");
+const nf1 = new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 1, minimumFractionDigits: 0 });
+const nf2 = new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 2, minimumFractionDigits: 0 });
+const vnd = n => nf.format(Math.round(n)) + " ₫";
+function money(n) { // dạng gọn: tỷ / tr / k
+  const a = Math.abs(n);
+  if (a >= 1e9) return nf2.format(n / 1e9) + " tỷ";
+  if (a >= 1e6) return nf1.format(n / 1e6) + " tr";
+  if (a >= 1e3) return nf.format(Math.round(n / 1e3)) + "k";
+  return nf.format(Math.round(n));
+}
+function moneyParts(n) { const s = money(n); const m = s.match(/^(.*?)\s?(tỷ|tr|k)?$/); return [m[1], m[2] || "₫"]; }
+const pct = (x, d = 1) => isFinite(x) ? new Intl.NumberFormat("vi-VN", { maximumFractionDigits: d, minimumFractionDigits: d }).format(x * 100) + "%" : "—";
+const int = n => nf.format(Math.round(n));
+const el = (tag, attrs, ...kids) => { const e = document.createElement(tag); if (attrs) for (const k in attrs) { if (k === "class") e.className = attrs[k]; else if (k === "text") e.textContent = attrs[k]; else e.setAttribute(k, attrs[k]); } for (const k of kids) if (k != null) e.append(k); return e; };
+const NS = "http://www.w3.org/2000/svg";
+const s = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+
+/* ===================== Danh mục ===================== */
+const SOURCES = ["Facebook", "TikTok", "Google", "Zalo", "Giới thiệu", "Vãng lai"];
+const SRC_COLOR = ["var(--s1)", "var(--s2)", "var(--s3)", "var(--s4)", "var(--s5)", "var(--s6)"];
+const PAID = [0, 1, 2, 3];
+const CPL = [340e3, 260e3, 480e3, 400e3];          // chi phí / lead
+const BOOK = [0.36, 0.28, 0.5, 0.44];              // lead → đặt hẹn
+const CLOSE = [0.46, 0.38, 0.53, 0.5, 0.7, 0.56];  // tư vấn → chốt
+const SERVICES = [
+  { n: "Khám & tư vấn", lo: 0, hi: 2e5 },
+  { n: "Cạo vôi, đánh bóng", lo: 3e5, hi: 5e5 },
+  { n: "Trám răng", lo: 3e5, hi: 9e5 },
+  { n: "Nhổ răng", lo: 1.2e6, hi: 3.5e6 },
+  { n: "Điều trị tủy", lo: 1.5e6, hi: 3e6 },
+  { n: "Tẩy trắng", lo: 2e6, hi: 4.5e6 },
+  { n: "Răng sứ", lo: 3e6, hi: 8e6, units: [1, 10] },
+  { n: "Niềng răng", lo: 3e7, hi: 8e7 },
+  { n: "Implant", lo: 1.5e7, hi: 3.5e7, units: [1, 3] },
+];
+const NEW_MIX = [0, 8, 10, 12, 10, 8, 25, 15, 12];
+const RET_MIX = [0, 35, 30, 10, 12, 6, 7, 0, 0];
+const LABO = new Set([6, 7, 8]);
+const EXP_CATS = ["Lương & thưởng", "Mặt bằng", "Vật tư", "Labo", "Marketing", "Điện nước & khác"];
+const PAY_METHODS = ["Chuyển khoản", "Tiền mặt", "Quẹt thẻ", "Trả góp"];
+const HOURS = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+const HW_WEEK = [3, 6, 6, 4, 1, 2, 4, 4, 5, 8, 9, 7, 3];
+const HW_WEND = [6, 8, 9, 8, 3, 4, 7, 7, 7, 6, 4, 2, 1];
+
+const CLINICS = [
+  { name: "Nha khoa An Khang", city: "Hà Nội", sw: "Bambu", size: 1.25, docs: 5 },
+  { name: "Nha khoa Bình Minh", city: "Hà Nội", sw: "Bambu", size: 0.9, docs: 4 },
+  { name: "Nha khoa Hoa Sen", city: "Hải Phòng", sw: "Bambu", size: 0.65, docs: 3 },
+  { name: "Nha khoa Phương Nam", city: "Hà Nội", sw: "Nha Khoa Số Plus", size: 1.0, docs: 4 },
+  { name: "Nha khoa Sông Hồng", city: "Bắc Ninh", sw: "Nha Khoa Số Plus", size: 0.6, docs: 3 },
+  { name: "Nha khoa Ngọc Trai", city: "TP.HCM", sw: "SimlyDent", size: 1.6, docs: 6 },
+  { name: "Nha khoa Thiên Thanh", city: "Đà Nẵng", sw: "DentalFlow", size: 0.85, docs: 4 },
+  { name: "Nha khoa Kim Long", city: "TP.HCM", sw: "VTTech", size: 1.1, docs: 5 },
+];
+const HO = ["Nguyễn", "Trần", "Lê", "Phạm", "Hoàng", "Vũ", "Đỗ", "Bùi", "Đặng", "Ngô"];
+const DEM = ["Minh", "Thu", "Ngọc", "Đức", "Thanh", "Hải", "Phương", "Quốc", "Bảo", "Hồng"];
+const TEN = ["Anh", "Hà", "Long", "Trang", "Tuấn", "Linh", "Nam", "Mai", "Hiếu", "Vy", "Khoa", "Giang"];
+const DOCTORS = [];
+CLINICS.forEach((c, ci) => {
+  c.idx = ci;
+  c.mkt = [rand(0.7, 1.4), rand(0.4, 1.3), rand(0.4, 1.2), rand(0.3, 1.0)];
+  c.closeAdj = rand(-0.07, 0.07);
+  c.arrive = rand(0.76, 0.86);
+  c.price = rand(0.88, 1.22);
+  c.docs0 = DOCTORS.length;
+  c.docW = [];
+  for (let k = 0; k < c.docs; k++) {
+    DOCTORS.push({ name: "BS. " + HO[randi(0, 9)] + " " + DEM[randi(0, 9)] + " " + TEN[randi(0, 11)], c: ci });
+    c.docW.push(k === 0 ? 1.8 : rand(0.6, 1.3));
+  }
+});
+
+/* ===================== Sinh dữ liệu mẫu (theo schema chuẩn DMAG) ===================== */
+const APPTS = [];    // lịch hẹn: d, c, h, st(0 đến / 1 hủy / 2 không đến), nw, src, doc, cl(chốt)
+const BILLS = [];    // phát sinh doanh thu: d, c, doc, sv, a, pays[[d,a]]
+const PAYS = [];     // phiếu thu: d, c, a, m
+const EXPS = [];     // phiếu chi: d, c, k, a
+const LEADS = new Float32Array(CLINICS.length * 6 * NDAYS);   // [c][s][d]
+const SPEND = new Float32Array(CLINICS.length * 6 * NDAYS);
+const li = (c, s, d) => (c * 6 + s) * NDAYS + d;
+
+const MONTH_F = [1.15, 0.72, 0.95, 1, 1, 1.12, 1.18, 1.12, 1.0, 1.02, 1.0, 1.1];
+const WD_F = [0.92, 0.95, 1, 1, 1.05, 1.3, 0.8];
+const TET = idxOf("2026-02-17");
+function season(d) {
+  const dt = dateOf(d);
+  let f = MONTH_F[dt.getUTCMonth()] * WD_F[wdOf(d)] * (1 + 0.011 * (d / 30.4));
+  if (d >= TET - 4 && d <= TET + 6) f *= 0.12;
+  return f;
+}
+
+function addAppt(d, c, nw, src) {
+  if (d > TODAY) return;
+  const C = CLINICS[c];
+  const wk = wdOf(d) >= 5;
+  const h = HOURS[pick(wk ? HW_WEND : HW_WEEK)];
+  const r = R();
+  const arrive = nw ? C.arrive - 0.04 : C.arrive + 0.05;
+  const st = r < arrive ? 0 : r < arrive + 0.09 ? 1 : 2;
+  const doc = C.docs0 + pick(C.docW);
+  const a = { d, c, h, st, nw, src, doc, cl: 0 };
+  APPTS.push(a);
+  if (st !== 0) return;
+  let sv, amt = 0;
+  if (nw) {
+    const docSkill = doc === C.docs0 ? 0.06 : 0;
+    a.cl = R() < CLOSE[src] + C.closeAdj + docSkill ? 1 : 0;
+    if (a.cl) { sv = pick(NEW_MIX); } else { sv = 0; }
+  } else {
+    if (R() < 0.52) return; // tái khám theo liệu trình, không phát sinh mới
+    sv = pick(RET_MIX);
+  }
+  const S = SERVICES[sv];
+  const units = S.units ? randi(S.units[0], R() < 0.7 ? Math.ceil((S.units[0] + S.units[1]) / 3) : S.units[1]) : 1;
+  amt = Math.round(rand(S.lo, S.hi) * C.price * units / 1e4) * 1e4;
+  if (amt <= 0) return;
+  const bill = { d, c, doc, sv, a: amt, pays: [] };
+  BILLS.push(bill);
+  const pay = (pd, pa) => {
+    if (pd > TODAY) return;
+    const m = amt >= 2e7 && R() < 0.18 ? 3 : pick([45, 35, 12, 0]);
+    bill.pays.push([pd, pa]);
+    PAYS.push({ d: pd, c, a: pa, m });
+  };
+  if (amt < 4e6) {
+    if (R() < 0.94) pay(d, amt); else { const p1 = Math.round(amt * 0.5 / 1e4) * 1e4; pay(d, p1); if (R() < 0.92) pay(d + randi(5, 40), amt - p1); }
+  } else {
+    const dep = Math.round(amt * rand(0.3, 0.6) / 1e4) * 1e4;
+    pay(d, dep);
+    const k = amt > 3e7 ? randi(3, 6) : randi(1, 3);
+    let rest = amt - dep, pd = d;
+    for (let i = 0; i < k; i++) {
+      pd += randi(14, 35);
+      const part = i === k - 1 ? rest : Math.round(rest / (k - i) / 1e4) * 1e4;
+      rest -= part;
+      if (R() < 0.985) pay(pd, part); else break;
+    }
+  }
+  if (LABO.has(sv)) EXPS.push({ d: Math.min(TODAY, d + randi(2, 10)), c, k: 3, a: Math.round(amt * rand(0.08, 0.14)) });
+  EXPS.push({ d, c, k: 2, a: Math.round(amt * rand(0.04, 0.08)) });
+}
+
+CLINICS.forEach((C, c) => {
+  const salary = C.size * rand(640e6, 760e6), rent = C.size * rand(120e6, 160e6), other = C.size * rand(30e6, 45e6);
+  for (let d = 0; d < NDAYS; d++) {
+    const f = season(d);
+    const dt = dateOf(d);
+    // chi phí cố định theo tháng được phân bổ đều theo ngày
+    const dim = new Date(Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth() + 1, 0)).getUTCDate();
+    EXPS.push({ d, c, k: 0, a: salary / dim });
+    EXPS.push({ d, c, k: 1, a: rent / dim });
+    EXPS.push({ d, c, k: 5, a: other / dim });
+    const mf = f < 0.3 ? 0.2 : 1;
+    for (const sIdx of PAID) {
+      const budget = [2.8e6, 1.5e6, 1.2e6, 0.7e6][sIdx] * C.size * C.mkt[sIdx] * mf * rand(0.8, 1.2);
+      SPEND[li(c, sIdx, d)] = budget;
+      EXPS.push({ d, c, k: 4, a: budget });
+      const nL = poisson(budget / CPL[sIdx] * Math.min(1.25, Math.max(0.5, f)));
+      LEADS[li(c, sIdx, d)] += nL;
+      for (let i = 0; i < nL; i++) if (R() < BOOK[sIdx]) addAppt(d + (R() < 0.4 ? 0 : randi(1, 6)), c, 1, sIdx);
+    }
+    const nRef = poisson(1.7 * C.size * f), nWalk = poisson(1.05 * C.size * f);
+    LEADS[li(c, 4, d)] += nRef; LEADS[li(c, 5, d)] += nWalk;
+    for (let i = 0; i < nRef; i++) addAppt(d + (R() < 0.5 ? 0 : randi(1, 4)), c, 1, 4);
+    for (let i = 0; i < nWalk; i++) addAppt(d, c, 1, 5);
+    const nRet = poisson(14 * C.size * f);
+    for (let i = 0; i < nRet; i++) addAppt(d, c, 0, -1);
+  }
+});
+
+/* ===================== Tổng hợp ===================== */
+function grain(d0, d1) { const n = d1 - d0 + 1; return n <= 35 ? "day" : n <= 130 ? "week" : "month"; }
+function buckets(d0, d1) {
+  const g = grain(d0, d1), list = [], map = new Int32Array(NDAYS).fill(-1);
+  let key = null;
+  for (let d = d0; d <= d1; d++) {
+    const dt = dateOf(d);
+    const k = g === "day" ? d : g === "week" ? d - wdOf(d) : dt.getUTCFullYear() * 12 + dt.getUTCMonth();
+    if (k !== key) {
+      key = k;
+      let label, full;
+      if (g === "day") { label = dm(d); full = WD[wdOf(d)] + ", " + dmy(d); }
+      else if (g === "week") { label = dm(Math.max(d0, d - wdOf(d))); full = "Tuần " + dm(d - wdOf(d)) + " – " + dm(d - wdOf(d) + 6); }
+      else { label = pad(dt.getUTCMonth() + 1) + "/" + String(dt.getUTCFullYear()).slice(2); full = "Tháng " + (dt.getUTCMonth() + 1) + "/" + dt.getUTCFullYear(); }
+      list.push({ label, full, d });
+    }
+    map[d] = list.length - 1;
+  }
+  return { g, list, map };
+}
+
+function agg(cset, d0, d1) {
+  const B = buckets(d0, d1), nb = B.list.length, z = () => new Float64Array(nb);
+  const o = {
+    d0, d1, B,
+    revenue: 0, collected: 0, expense: 0, bills: 0,
+    appts: 0, arrived: 0, cancelled: 0, noshow: 0,
+    newArr: 0, closed: 0, newRevenue: 0, retArr: 0,
+    sRevenue: z(), sCollected: z(), sExpense: z(),
+    sNew: SOURCES.map(z), sStatus: [z(), z(), z()],
+    svc: SERVICES.map(() => ({ rev: 0, n: 0 })),
+    src: SOURCES.map(() => ({ leads: 0, booked: 0, arrived: 0, closed: 0, rev: 0, spend: 0 })),
+    doc: DOCTORS.map(() => ({ visits: 0, consult: 0, closed: 0, rev: 0 })),
+    heat: Array.from({ length: 7 }, () => new Float64Array(HOURS.length)),
+    expCat: new Float64Array(EXP_CATS.length),
+    payM: new Float64Array(PAY_METHODS.length),
+    debt: 0, aging: [0, 0, 0, 0],
+  };
+  const billSrc = new Map();
+  for (const a of APPTS) {
+    if (!cset.has(a.c) || a.d < d0 || a.d > d1) continue;
+    const b = B.map[a.d];
+    o.appts++; o.sStatus[a.st][b]++;
+    if (a.nw) o.src[a.src].booked++;
+    if (a.st === 1) { o.cancelled++; continue; }
+    if (a.st === 2) { o.noshow++; continue; }
+    o.arrived++;
+    o.heat[wdOf(a.d)][HOURS.indexOf(a.h)]++;
+    o.doc[a.doc].visits++;
+    if (a.nw) {
+      o.newArr++; o.sNew[a.src][b]++; o.src[a.src].arrived++; o.doc[a.doc].consult++;
+      if (a.cl) { o.closed++; o.src[a.src].closed++; o.doc[a.doc].closed++; }
+    } else o.retArr++;
+  }
+  // gán nguồn cho doanh thu khách mới: ghép theo (ngày, phòng khám, bác sĩ) — đủ cho dữ liệu mẫu
+  for (const a of APPTS) if (a.nw && a.cl && a.st === 0 && cset.has(a.c) && a.d >= d0 && a.d <= d1) billSrc.set(a.d + ":" + a.doc, a.src);
+  for (const x of BILLS) {
+    if (!cset.has(x.c)) continue;
+    if (x.d <= d1) {
+      let paid = 0; for (const p of x.pays) if (p[0] <= d1) paid += p[1];
+      const out = x.a - paid;
+      if (out > 0) { o.debt += out; const age = d1 - x.d; o.aging[age <= 30 ? 0 : age <= 60 ? 1 : age <= 90 ? 2 : 3] += out; }
+    }
+    if (x.d < d0 || x.d > d1) continue;
+    o.revenue += x.a; o.bills++;
+    o.sRevenue[B.map[x.d]] += x.a;
+    o.svc[x.sv].rev += x.a; o.svc[x.sv].n++;
+    o.doc[x.doc].rev += x.a;
+    const sk = billSrc.get(x.d + ":" + x.doc);
+    if (sk !== undefined && x.sv !== 0) { o.src[sk].rev += x.a; o.newRevenue += x.a; billSrc.delete(x.d + ":" + x.doc); }
+  }
+  for (const p of PAYS) {
+    if (!cset.has(p.c) || p.d < d0 || p.d > d1) continue;
+    o.collected += p.a; o.sCollected[B.map[p.d]] += p.a; o.payM[p.m] += p.a;
+  }
+  for (const e of EXPS) {
+    if (!cset.has(e.c) || e.d < d0 || e.d > d1) continue;
+    o.expense += e.a; o.sExpense[B.map[e.d]] += e.a; o.expCat[e.k] += e.a;
+  }
+  for (const c of cset) for (let si = 0; si < 6; si++) for (let d = d0; d <= d1; d++) {
+    o.src[si].leads += LEADS[li(c, si, d)]; o.src[si].spend += SPEND[li(c, si, d)];
+  }
+  o.closeRate = o.closed / o.newArr;
+  o.arriveRate = o.arrived / o.appts;
+  o.avgTicket = o.revenue / o.bills;
+  o.profit = o.collected - o.expense;
+  o.leads = o.src.reduce((t, x) => t + x.leads, 0);
+  o.spend = o.src.reduce((t, x) => t + x.spend, 0);
+  return o;
+}
+
+/* ===================== Trạng thái & bộ lọc ===================== */
+const PRESETS = [
+  { id: "7d", n: "7 ngày", r: () => [TODAY - 6, TODAY] },
+  { id: "30d", n: "30 ngày", r: () => [TODAY - 29, TODAY] },
+  { id: "mtd", n: "Tháng này", r: () => [idxOf("2026-10-01"), TODAY] },
+  { id: "lm", n: "Tháng trước", r: () => [idxOf("2026-09-01"), idxOf("2026-09-30")] },
+  { id: "90d", n: "90 ngày", r: () => [TODAY - 89, TODAY] },
+  { id: "ytd", n: "Từ đầu năm", r: () => [idxOf("2026-01-01"), TODAY] },
+  { id: "12m", n: "12 tháng", r: () => [TODAY - 364, TODAY] },
+];
+const state = { clinic: "all", preset: "30d", d0: TODAY - 29, d1: TODAY };
+try { const s0 = JSON.parse(localStorage.getItem("dmag-demo-filters") || "null"); if (s0 && s0.clinic != null) Object.assign(state, s0); } catch (e) {}
+function save() { try { localStorage.setItem("dmag-demo-filters", JSON.stringify(state)); } catch (e) {} }
+
+const fClinic = document.getElementById("fClinic");
+fClinic.append(el("option", { value: "all", text: "Toàn chuỗi (" + CLINICS.length + " phòng khám)" }));
+CLINICS.forEach((c, i) => fClinic.append(el("option", { value: String(i), text: c.name })));
+fClinic.addEventListener("change", () => { state.clinic = fClinic.value; save(); render(); });
+
+const fPreset = document.getElementById("fPreset");
+PRESETS.forEach(p => {
+  const b = el("button", { type: "button", "data-id": p.id, text: p.n });
+  b.addEventListener("click", () => { state.preset = p.id; [state.d0, state.d1] = p.r(); save(); render(); });
+  fPreset.append(b);
+});
+const fFrom = document.getElementById("fFrom"), fTo = document.getElementById("fTo");
+function onCustom() {
+  let a = idxOf(fFrom.value), b = idxOf(fTo.value);
+  if (!isFinite(a) || !isFinite(b)) return;
+  a = Math.max(0, Math.min(TODAY, a)); b = Math.max(0, Math.min(TODAY, b));
+  if (a > b) [a, b] = [b, a];
+  state.preset = "custom"; state.d0 = a; state.d1 = b; save(); render();
+}
+fFrom.addEventListener("change", onCustom); fTo.addEventListener("change", onCustom);
+
+const cset = () => state.clinic === "all" ? new Set(CLINICS.map((_, i) => i)) : new Set([+state.clinic]);
+function prevRange() { const n = state.d1 - state.d0 + 1; return state.d0 - n >= 0 ? [state.d0 - n, state.d0 - 1] : null; }
+
+/* ===================== Tooltip ===================== */
+const tip = document.getElementById("tip");
+function showTip(ev, title, rows) {
+  tip.replaceChildren(el("div", { class: "t", text: title }));
+  for (const r of rows) {
+    const k = el("span", { class: "k" });
+    if (r.color) { const i = el("i"); i.style.background = r.color; k.append(i); }
+    k.append(document.createTextNode(r.k));
+    tip.append(el("div", { class: "r" }, k, el("b", { text: r.v })));
+  }
+  tip.hidden = false;
+  const pt = ev.touches ? ev.touches[0] : ev;
+  let x = (pt.clientX ?? 0) + 14, y = (pt.clientY ?? 0) + 14;
+  if (ev.type === "focus") { const bb = ev.target.getBoundingClientRect(); x = bb.right + 8; y = bb.top; }
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  if (x + w > innerWidth - 8) x = Math.max(8, x - w - 28);
+  if (y + h > innerHeight - 8) y = Math.max(8, innerHeight - h - 8);
+  tip.style.left = x + "px"; tip.style.top = y + "px";
+}
+const hideTip = () => { tip.hidden = true; };
+addEventListener("scroll", hideTip, { passive: true });
+
+/* ===================== Biểu đồ ===================== */
+function niceMax(v, ticks = 4) {
+  if (v <= 0) return { max: 1, step: 0.25 };
+  const raw = v / ticks, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(st => st >= raw);
+  return { max: Math.ceil(v / step) * step, step };
+}
+function tickEvery(n, w, minPx = 54) { return Math.max(1, Math.ceil(n / Math.max(1, Math.floor(w / minPx)))); }
+function bindTip(node, fn) {
+  node.setAttribute("tabindex", "0");
+  node.addEventListener("pointermove", ev => fn(ev));
+  node.addEventListener("pointerleave", hideTip);
+  node.addEventListener("focus", ev => fn(ev));
+  node.addEventListener("blur", hideTip);
+}
+
+// Đường theo thời gian (1 trục). series: [{name, color, values}]
+function lineChart(host, { labels, fulls, series, fmt = money, area = true, height = 250 }) {
+  const W = Math.max(280, host.clientWidth), H = height, m = { l: 56, r: 16, t: 12, b: 26 };
+  const iw = W - m.l - m.r, ih = H - m.t - m.b, n = labels.length;
+  const mx = Math.max(...series.flatMap(x => Array.from(x.values)));
+  const { max, step } = niceMax(mx);
+  const X = i => m.l + (n === 1 ? iw / 2 : i * iw / (n - 1)), Y = v => m.t + ih - v / max * ih;
+  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, role: "img" });
+  for (let v = 0; v <= max + 1e-9; v += step) {
+    svg.append(s("line", { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), class: v === 0 ? "basel" : "gridl" }));
+    const t = s("text", { x: m.l - 8, y: Y(v) + 4, "text-anchor": "end" }); t.textContent = fmt(v); svg.append(t);
+  }
+  const ev = tickEvery(n, iw);
+  for (let i = 0; i < n; i += ev) { const t = s("text", { x: X(i), y: H - 6, "text-anchor": i === 0 && n > 1 ? "start" : "middle" }); t.textContent = labels[i]; svg.append(t); }
+  series.forEach((se, k) => {
+    const pts = Array.from(se.values, (v, i) => [X(i), Y(v)]);
+    const d = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join("");
+    if (area && k === 0 && n > 1) svg.append(s("path", { d: d + `L${X(n - 1)} ${Y(0)}L${X(0)} ${Y(0)}Z`, fill: se.color, opacity: 0.1 }));
+    svg.append(s("path", { d, fill: "none", stroke: se.color, "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }));
+    const last = pts[n - 1];
+    svg.append(s("circle", { cx: last[0], cy: last[1], r: 4, fill: se.color, stroke: "var(--panel)", "stroke-width": 2 }));
+  });
+  const cross = s("line", { y1: m.t, y2: m.t + ih, stroke: "var(--base)", "stroke-width": 1, visibility: "hidden" });
+  const dots = series.map(se => s("circle", { r: 4, fill: se.color, stroke: "var(--panel)", "stroke-width": 2, visibility: "hidden" }));
+  svg.append(cross, ...dots);
+  const hit = s("rect", { x: m.l, y: m.t, width: iw, height: ih, class: "hit" });
+  svg.append(hit);
+  const move = e => {
+    const bb = svg.getBoundingClientRect();
+    const px = ((e.clientX ?? bb.left + bb.width) - bb.left) * W / bb.width;
+    const i = Math.max(0, Math.min(n - 1, Math.round((px - m.l) / (iw / Math.max(1, n - 1)))));
+    cross.setAttribute("x1", X(i)); cross.setAttribute("x2", X(i)); cross.setAttribute("visibility", "visible");
+    dots.forEach((dt, k) => { dt.setAttribute("cx", X(i)); dt.setAttribute("cy", Y(series[k].values[i])); dt.setAttribute("visibility", "visible"); });
+    showTip(e, fulls[i], series.map(se => ({ k: se.name, v: fmt === money ? vnd(se.values[i]) : fmt(se.values[i]), color: se.color })));
+  };
+  bindTip(hit, move);
+  hit.addEventListener("pointerleave", () => { cross.setAttribute("visibility", "hidden"); dots.forEach(d => d.setAttribute("visibility", "hidden")); });
+  host.replaceChildren(svg);
+}
+
+// Cột chồng hoặc cột nhóm. series: [{name, color, values}]
+function columnChart(host, { labels, fulls, series, mode = "stack", fmt = int, tipFmt, height = 250, total = true }) {
+  const W = Math.max(280, host.clientWidth), H = height, m = { l: 52, r: 10, t: 12, b: 26 };
+  const iw = W - m.l - m.r, ih = H - m.t - m.b, n = labels.length;
+  const tot = labels.map((_, i) => series.reduce((t, se) => t + se.values[i], 0));
+  const mx = mode === "stack" ? Math.max(...tot) : Math.max(...series.flatMap(x => Array.from(x.values)));
+  const { max, step } = niceMax(mx);
+  const Y = v => m.t + ih - v / max * ih;
+  const band = iw / n, gap = 2;
+  const groupW = Math.min(mode === "stack" ? 24 : 24 * series.length + gap * (series.length - 1), band * 0.72);
+  const barW = mode === "stack" ? groupW : (groupW - gap * (series.length - 1)) / series.length;
+  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, role: "img" });
+  for (let v = 0; v <= max + 1e-9; v += step) {
+    svg.append(s("line", { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), class: v === 0 ? "basel" : "gridl" }));
+    const t = s("text", { x: m.l - 8, y: Y(v) + 4, "text-anchor": "end" }); t.textContent = fmt(v); svg.append(t);
+  }
+  const ev = tickEvery(n, iw, 46);
+  const g = s("g", {}); svg.append(g);
+  const tf = tipFmt || fmt;
+  for (let i = 0; i < n; i++) {
+    const cx = m.l + band * i + band / 2;
+    if (i % ev === 0) { const t = s("text", { x: cx, y: H - 6, "text-anchor": "middle" }); t.textContent = labels[i]; svg.append(t); }
+    const col = s("g", { class: "col" });
+    let acc = 0;
+    const vis = series.map((se, k) => ({ se, k })).filter(x => x.se.values[i] > 0);
+    vis.forEach(({ se, k }, j) => {
+      const v = se.values[i];
+      let x, y0, y1;
+      if (mode === "stack") { x = cx - barW / 2; y0 = Y(acc); acc += v; y1 = Y(acc); if (j > 0) y0 -= gap; }
+      else { x = cx - groupW / 2 + k * (barW + gap); y0 = Y(0); y1 = Y(v); }
+      const hgt = Math.max(0, y0 - y1);
+      if (hgt <= 0.5) return;
+      const topRound = mode === "group" || j === vis.length - 1;
+      col.append(s("path", { d: roundTop(x, y1, barW, hgt, topRound ? Math.min(4, barW / 2, hgt) : 0), fill: se.color, class: "mark" }));
+    });
+    const hit = s("rect", { x: m.l + band * i, y: m.t, width: band, height: ih, class: "hit" });
+    col.append(hit); g.append(col);
+    bindTip(hit, e => {
+      g.classList.add("dim"); col.querySelectorAll(".mark").forEach(x => x.classList.add("on"));
+      const rows = series.map(se => ({ k: se.name, v: tf(se.values[i]), color: se.color }));
+      if (mode === "stack" && total && series.length > 1) rows.push({ k: "Tổng", v: tf(tot[i]) });
+      showTip(e, fulls[i], rows);
+    });
+    hit.addEventListener("pointerleave", () => { g.classList.remove("dim"); col.querySelectorAll(".mark").forEach(x => x.classList.remove("on")); });
+    hit.addEventListener("blur", () => { g.classList.remove("dim"); col.querySelectorAll(".mark").forEach(x => x.classList.remove("on")); });
+  }
+  host.replaceChildren(svg);
+}
+function roundTop(x, y, w, h, r) {
+  return `M${x} ${y + h}V${y + r}Q${x} ${y} ${x + r} ${y}H${x + w - r}Q${x + w} ${y} ${x + w} ${y + r}V${y + h}Z`;
+}
+function roundRight(x, y, w, h, r) {
+  r = Math.min(r, w, h / 2);
+  return `M${x} ${y}H${x + w - r}Q${x + w} ${y} ${x + w} ${y + r}V${y + h - r}Q${x + w} ${y + h} ${x + w - r} ${y + h}H${x}Z`;
+}
+
+// Thanh ngang. rows: [{label, value, color?, tip?: [{k,v}]}]
+function barChart(host, { rows, fmt = money, labelW, color = "var(--s1)", tipTitle }) {
+  const W = Math.max(280, host.clientWidth), rowH = 30, barH = 16, m = { t: 4, b: 4 };
+  const lw = labelW || Math.min(170, Math.max(96, W * 0.32));
+  const valW = 64, iw = W - lw - valW - 8;
+  const H = m.t + m.b + rows.length * rowH;
+  const max = Math.max(1, ...rows.map(r => r.value));
+  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, role: "img" });
+  svg.append(s("line", { x1: lw, x2: lw, y1: 0, y2: H, class: "basel" }));
+  const g = s("g", {}); svg.append(g);
+  rows.forEach((r, i) => {
+    const y = m.t + i * rowH, w = Math.max(r.value > 0 ? 2 : 0, r.value / max * iw);
+    const row = s("g", {});
+    const lt = s("text", { x: lw - 10, y: y + rowH / 2 + 4, "text-anchor": "end", class: "lbl" });
+    lt.textContent = r.label.length > 26 ? r.label.slice(0, 25) + "…" : r.label;
+    row.append(lt);
+    if (w > 0) row.append(s("path", { d: roundRight(lw, y + (rowH - barH) / 2, w, barH, 4), fill: r.color || color, class: "mark" }));
+    const vt = s("text", { x: lw + w + 6, y: y + rowH / 2 + 4, class: "val" }); vt.textContent = fmt(r.value); row.append(vt);
+    const hit = s("rect", { x: 0, y, width: W, height: rowH, class: "hit" });
+    row.append(hit); g.append(row);
+    bindTip(hit, e => {
+      g.classList.add("dim"); row.querySelector(".mark")?.classList.add("on");
+      showTip(e, tipTitle ? tipTitle(r) : r.label, r.tip || [{ k: "Giá trị", v: fmt === money ? vnd(r.value) : fmt(r.value) }]);
+    });
+    const off = () => { g.classList.remove("dim"); row.querySelector(".mark")?.classList.remove("on"); };
+    hit.addEventListener("pointerleave", off); hit.addEventListener("blur", off);
+  });
+  host.replaceChildren(svg);
+}
+
+// Bản đồ nhiệt thứ × giờ (thang tuần tự 1 màu, nhạt = ít)
+function heatmap(host, { matrix, rowsL, colsL, fmt = int }) {
+  const W = Math.max(300, host.clientWidth), m = { l: 30, r: 4, t: 4, b: 22 };
+  const cw = (W - m.l - m.r) / colsL.length, ch = Math.min(34, Math.max(22, cw * 0.62));
+  const H = m.t + m.b + rowsL.length * ch;
+  const max = Math.max(1, ...matrix.flatMap(r => Array.from(r)));
+  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, role: "img" });
+  const g = s("g", {}); svg.append(g);
+  rowsL.forEach((rl, i) => {
+    const t = s("text", { x: m.l - 6, y: m.t + i * ch + ch / 2 + 4, "text-anchor": "end" }); t.textContent = rl; svg.append(t);
+    colsL.forEach((cl, j) => {
+      const v = matrix[i][j], k = v / max;
+      const cell = s("rect", { x: m.l + j * cw + 1, y: m.t + i * ch + 1, width: cw - 2, height: ch - 2, rx: 3, fill: `color-mix(in oklab, var(--seq) ${Math.round(6 + k * 94)}%, var(--panel))`, class: "mark" });
+      g.append(cell);
+      bindTip(cell, e => { cell.setAttribute("stroke", "var(--ink)"); showTip(e, rl + " · " + cl, [{ k: "Lượt khách đến", v: fmt(v) }]); });
+      const off = () => cell.removeAttribute("stroke");
+      cell.addEventListener("pointerleave", off); cell.addEventListener("blur", off);
+    });
+  });
+  const ev = tickEvery(colsL.length, W - m.l, 34);
+  colsL.forEach((cl, j) => { if (j % ev) return; const t = s("text", { x: m.l + j * cw + cw / 2, y: H - 6, "text-anchor": "middle" }); t.textContent = cl; svg.append(t); });
+  host.replaceChildren(svg);
+}
+
+/* ===================== Khung trang ===================== */
+const charts = [];   // {host, draw}
+function card(span, title, desc, opts = {}) {
+  const c = el("section", { class: "card span-" + span });
+  const head = el("div", { class: "card-h" });
+  const ht = el("div", null, el("h2", { text: title }), desc ? el("div", { class: "desc", text: desc }) : null);
+  head.append(ht);
+  c.append(head);
+  if (opts.legend) c.append(legend(opts.legend));
+  const body = el("div", { class: "chart" });
+  c.append(body);
+  if (opts.draw) {
+    charts.push({ host: body, draw: opts.draw });
+    if (opts.table) {
+      const tb = el("div", { class: "tablewrap" }); tb.hidden = true; c.append(tb);
+      const btn = el("button", { class: "tgl", type: "button", text: "Xem bảng", "aria-pressed": "false" });
+      btn.addEventListener("click", () => {
+        const on = tb.hidden; tb.hidden = !on; body.hidden = on;
+        if (c.querySelector(".legend")) c.querySelector(".legend").hidden = on;
+        btn.textContent = on ? "Xem biểu đồ" : "Xem bảng"; btn.setAttribute("aria-pressed", String(on));
+        if (on) tb.replaceChildren(table(opts.table()));
+      });
+      head.append(btn);
+    }
+  }
+  return { card: c, body };
+}
+function legend(items) {
+  const l = el("div", { class: "legend" });
+  for (const it of items) { const i = el("i", { class: it.line ? "ln" : "" }); i.style.background = it.color; l.append(el("span", null, i, document.createTextNode(it.name))); }
+  return l;
+}
+// t: {cols:[{k, n, num?, f?, bar?}], rows:[...], sel?: fn(row)}
+function table(t) {
+  const tbl = el("table");
+  const hr = el("tr");
+  t.cols.forEach(c => hr.append(el("th", { class: c.num ? "n" : "", text: c.n, scope: "col" })));
+  tbl.append(el("thead", null, hr));
+  const tb = el("tbody");
+  const maxes = {};
+  t.cols.forEach(c => { if (c.bar) maxes[c.k] = Math.max(1, ...t.rows.map(r => r[c.k])); });
+  for (const r of t.rows) {
+    const tr = el("tr", t.sel && t.sel(r) ? { class: "sel" } : null);
+    t.cols.forEach(c => {
+      const v = r[c.k], txt = c.f ? c.f(v, r) : v;
+      if (c.bar) {
+        const b = el("div", { class: "b" }); b.style.width = Math.max(2, v / maxes[c.k] * 100) + "%";
+        tr.append(el("td", { class: "n" }, el("div", { class: "bar-cell" }, el("span", { text: txt }), el("div", { class: "bt" }, b))));
+      } else {
+        const cls = c.num ? "n" : c.wrap ? "wrap" : "";
+        if (txt instanceof Node) tr.append(el("td", { class: cls }, txt)); else tr.append(el("td", { class: cls, text: txt }));
+      }
+    });
+    tb.append(tr);
+  }
+  tbl.append(tb);
+  return tbl;
+}
+function kpi(label, value, cur, prev, { hero = false, goodUp = true, kind = "money" } = {}) {
+  const k = el("div", { class: "kpi" + (hero ? " hero" : "") });
+  k.append(el("div", { class: "lab", text: label }));
+  const v = el("div", { class: "val" });
+  if (kind === "money") { const [a, u] = moneyParts(value); v.append(document.createTextNode(a)); v.append(el("span", { class: "unit", text: u })); }
+  else v.textContent = value;
+  k.append(v);
+  if (prev != null && isFinite(prev) && prev !== 0) {
+    const ch = kind === "rate" ? cur - prev : (cur - prev) / Math.abs(prev);
+    const dir = Math.abs(ch) < 0.0005 ? "flat" : ch > 0 ? "up" : "down";
+    const good = dir === "flat" ? "flat" : ((dir === "up") === goodUp ? "up" : "down");
+    const txt = (ch > 0 ? "▲ " : ch < 0 ? "▼ " : "") + (kind === "rate" ? nf1.format(Math.abs(ch * 100)) + " điểm" : pct(Math.abs(ch)));
+    k.append(el("div", { class: "delta " + good }, document.createTextNode(txt), el("span", { class: "vs", text: " so với kỳ trước" })));
+  } else k.append(el("div", { class: "delta flat", text: "Chưa có kỳ trước để so sánh" }));
+  return k;
+}
+function statusEl(kind, text) {
+  const color = kind === "ok" ? "var(--good)" : kind === "warn" ? "var(--warn)" : "var(--bad)";
+  const icon = s("svg", { viewBox: "0 0 16 16", "aria-hidden": "true" });
+  icon.append(s("circle", { cx: 8, cy: 8, r: 7, fill: color }));
+  const p = kind === "ok" ? "M4.8 8.2l2.1 2.1 4.3-4.5" : kind === "warn" ? "M8 4.5v4.2M8 11v.2" : "M5.6 5.6l4.8 4.8M10.4 5.6l-4.8 4.8";
+  icon.append(s("path", { d: p, stroke: kind === "warn" ? "#1b1300" : "#fff", "stroke-width": 1.8, fill: "none", "stroke-linecap": "round" }));
+  return el("span", { class: "status" }, icon, document.createTextNode(text));
+}
+
+/* ===================== Các trang ===================== */
+const ICONS = {
+  overview: "M3 3h6v8H3zM11 3h6v5h-6zM11 10h6v7h-6zM3 13h6v4H3z",
+  customers: "M7 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM1.5 17c.4-3 2.6-5 5.5-5s5.1 2 5.5 5M13.5 9a2.5 2.5 0 1 0 0-5M15 12c2 .5 3.3 2.2 3.5 5",
+  appts: "M3 5h14v12H3zM3 9h14M7 3v4M13 3v4",
+  doctors: "M10 9a3.2 3.2 0 1 0 0-6.4A3.2 3.2 0 0 0 10 9zM3.5 17.5c.5-3.4 3.2-5.5 6.5-5.5s6 2.1 6.5 5.5M10 12v3.5M8.3 13.8h3.4",
+  finance: "M2.5 5.5h15v10h-15zM2.5 8.5h15M6 12.5h3",
+  compare: "M4 16V9M8 16V4M12 16v-5M16 16V7",
+  sources: "M4 5a6 2 0 1 0 12 0 6 2 0 1 0-12 0M4 5v10c0 1.1 2.7 2 6 2s6-.9 6-2V5M4 10c0 1.1 2.7 2 6 2s6-.9 6-2",
+};
+const PAGES = [
+  { id: "tong-quan", n: "Tổng quan", icon: "overview", sub: "Doanh thu, dòng tiền và khách hàng trong kỳ", render: pOverview },
+  { id: "khach-hang", n: "Khách hàng & Marketing", icon: "customers", sub: "Nguồn khách, phễu chuyển đổi và hiệu quả chi phí quảng cáo", render: pCustomers },
+  { id: "lich-hen", n: "Lịch hẹn", icon: "appts", sub: "Tỷ lệ đến hẹn và giờ cao điểm", render: pAppts },
+  { id: "bac-si", n: "Bác sĩ", icon: "doctors", sub: "Năng suất, tỷ lệ chốt và hoa hồng ước tính", render: pDoctors },
+  { id: "tai-chinh", n: "Tài chính", icon: "finance", sub: "Thu chi, cơ cấu chi phí và công nợ khách hàng", render: pFinance },
+  { id: "so-sanh", n: "So sánh phòng khám", icon: "compare", sub: "Xếp hạng các phòng khám trong hệ thống DMAG", render: pCompare },
+  { id: "ket-noi", n: "Kết nối dữ liệu", icon: "sources", sub: "Trạng thái đồng bộ từ phần mềm quản lý của từng phòng khám", render: pSources },
+];
+const nav = document.getElementById("nav");
+PAGES.forEach(p => {
+  const a = el("a", { href: "#" + p.id });
+  const ic = s("svg", { viewBox: "0 0 20 20", "aria-hidden": "true" });
+  ic.append(s("path", { d: ICONS[p.icon], fill: "none", stroke: "currentColor", "stroke-width": 1.6, "stroke-linejoin": "round", "stroke-linecap": "round" }));
+  a.append(ic, el("span", { class: "lt", text: p.n }));
+  nav.append(a);
+});
+function currentPage() { const h = location.hash.slice(1); return PAGES.find(p => p.id === h) || PAGES[0]; }
+addEventListener("hashchange", () => { render(); scrollTo(0, 0); });
+
+function scopeName() { return state.clinic === "all" ? "Toàn chuỗi" : CLINICS[+state.clinic].name; }
+function rangeText() { return dmy(state.d0) + " – " + dmy(state.d1) + " · " + (state.d1 - state.d0 + 1) + " ngày"; }
+
+function render() {
+  const P = currentPage();
+  [...nav.children].forEach((a, i) => { if (PAGES[i] === P) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+  fClinic.value = state.clinic;
+  [...fPreset.children].forEach(b => b.setAttribute("aria-pressed", String(b.dataset.id === state.preset)));
+  fFrom.value = isoOf(state.d0); fTo.value = isoOf(state.d1);
+  document.getElementById("pageTitle").textContent = P.n;
+  document.getElementById("pageSub").textContent = (P.id === "ket-noi" ? "" : scopeName() + " · " + rangeText() + " · ") + P.sub;
+  charts.length = 0; hideTip();
+  const view = document.getElementById("view");
+  view.replaceChildren();
+  P.render(view);
+  drawAll();
+}
+function drawAll() { for (const c of charts) if (c.host.isConnected && !c.host.hidden) c.draw(c.host); }
+let rt; new ResizeObserver(() => { clearTimeout(rt); rt = setTimeout(drawAll, 120); }).observe(document.getElementById("view"));
+
+function getAgg() {
+  const cs = cset(), cur = agg(cs, state.d0, state.d1), pr = prevRange();
+  return { cur, prev: pr ? agg(cs, pr[0], pr[1]) : null };
+}
+const P_ = (prev, k) => prev ? prev[k] : null;
+const seriesTable = (A, defs) => ({
+  cols: [{ k: "t", n: "Thời gian" }, ...defs.map(d => ({ k: d.k, n: d.n, num: true, f: d.f }))],
+  rows: A.B.list.map((b, i) => Object.assign({ t: b.full }, ...defs.map(d => ({ [d.k]: d.v[i] })))),
+});
+
+/* ---------- Tổng quan ---------- */
+function pOverview(view) {
+  const { cur: A, prev: Pv } = getAgg();
+  const k = el("div", { class: "kpis" });
+  k.append(
+    kpi("Doanh thu phát sinh", A.revenue, A.revenue, P_(Pv, "revenue"), { hero: true }),
+    kpi("Thực thu", A.collected, A.collected, P_(Pv, "collected")),
+    kpi("Công nợ phải thu", A.debt, A.debt, P_(Pv, "debt"), { goodUp: false }),
+    kpi("Khách mới đến khám", int(A.newArr), A.newArr, P_(Pv, "newArr"), { kind: "count" }),
+    kpi("Tỷ lệ chốt điều trị", pct(A.closeRate), A.closeRate, P_(Pv, "closeRate"), { kind: "rate" }),
+    kpi("Tỷ lệ đến hẹn", pct(A.arriveRate), A.arriveRate, P_(Pv, "arriveRate"), { kind: "rate" }),
+  );
+  view.append(k);
+  const g = el("div", { class: "grid" });
+  const lg = [{ name: "Doanh thu phát sinh", color: "var(--s1)", line: true }, { name: "Thực thu", color: "var(--s2)", line: true }];
+  g.append(card(8, "Doanh thu và thực thu", "Theo " + ({ day: "ngày", week: "tuần", month: "tháng" })[A.B.g], {
+    legend: lg,
+    draw: h => lineChart(h, { labels: A.B.list.map(b => b.label), fulls: A.B.list.map(b => b.full), series: [{ name: "Doanh thu phát sinh", color: "var(--s1)", values: A.sRevenue }, { name: "Thực thu", color: "var(--s2)", values: A.sCollected }] }),
+    table: () => seriesTable(A, [{ k: "r", n: "Doanh thu", v: A.sRevenue, f: vnd }, { k: "c", n: "Thực thu", v: A.sCollected, f: vnd }]),
+  }).card);
+  const svcRows = SERVICES.map((sv, i) => ({ label: sv.n, value: A.svc[i].rev, n: A.svc[i].n })).filter(r => r.value > 0).sort((a, b) => b.value - a.value);
+  g.append(card(4, "Doanh thu theo dịch vụ", "Tỷ trọng trên tổng doanh thu phát sinh", {
+    draw: h => barChart(h, { rows: svcRows.map(r => ({ ...r, tip: [{ k: "Doanh thu", v: vnd(r.value) }, { k: "Tỷ trọng", v: pct(r.value / A.revenue) }, { k: "Số ca", v: int(r.n) }] })) }),
+    table: () => ({ cols: [{ k: "label", n: "Dịch vụ" }, { k: "n", n: "Số ca", num: true, f: int }, { k: "value", n: "Doanh thu", num: true, f: vnd }, { k: "sh", n: "Tỷ trọng", num: true, f: pct }], rows: svcRows.map(r => ({ ...r, sh: r.value / A.revenue })) }),
+  }).card);
+  const srcSeries = SOURCES.map((n, i) => ({ name: n, color: SRC_COLOR[i], values: A.sNew[i] }));
+  g.append(card(7, "Khách mới theo nguồn", "Số khách mới đến khám", {
+    legend: SOURCES.map((n, i) => ({ name: n, color: SRC_COLOR[i] })),
+    draw: h => columnChart(h, { labels: A.B.list.map(b => b.label), fulls: A.B.list.map(b => b.full), series: srcSeries }),
+    table: () => seriesTable(A, SOURCES.map((n, i) => ({ k: "s" + i, n, v: A.sNew[i], f: int }))),
+  }).card);
+  const docs = DOCTORS.map((d, i) => ({ ...d, ...A.doc[i] })).filter(d => cset().has(d.c)).sort((a, b) => b.rev - a.rev).slice(0, 6);
+  const tc = card(5, "Bác sĩ có doanh thu cao nhất", "Top 6 trong kỳ");
+  tc.body.append(el("div", { class: "tablewrap" }, table({
+    cols: [{ k: "name", n: "Bác sĩ" }, { k: "visits", n: "Lượt khám", num: true, f: int }, { k: "rev", n: "Doanh thu", num: true, f: money, bar: true }],
+    rows: docs,
+  })));
+  g.append(tc.card);
+  const dc = card(12, "Cách tính chỉ số", "Định nghĩa thống nhất cho mọi phòng khám, bất kể dùng phần mềm nào");
+  dc.body.append(el("dl", { class: "defs" }, ...[
+    ["Doanh thu phát sinh", "Tổng giá trị dịch vụ đã chốt và ghi nhận trong kỳ, trước khi thu tiền."],
+    ["Thực thu", "Tổng tiền thực nhận trong kỳ (phiếu thu), gồm cả thu nợ của các kỳ trước."],
+    ["Công nợ phải thu", "Phần khách còn nợ tính đến ngày cuối kỳ, cộng dồn từ mọi kỳ."],
+    ["Khách mới đến khám", "Khách lần đầu đến phòng khám và được tư vấn trong kỳ."],
+    ["Tỷ lệ chốt điều trị", "Số khách mới đồng ý điều trị chia cho số khách mới được tư vấn."],
+    ["Tỷ lệ đến hẹn", "Số lịch hẹn khách đã đến chia cho tổng số lịch hẹn trong kỳ."],
+    ["Tổng chi", "Phiếu chi phát sinh trong kỳ. Lương, mặt bằng và chi phí cố định được phân bổ đều theo ngày."],
+    ["Chi phí / khách mới", "Chi phí quảng cáo chia cho số khách mới đến từ các kênh quảng cáo trả phí."],
+  ].map(([a, b]) => el("div", null, el("dt", { text: a }), el("dd", { text: b })))));
+  g.append(dc.card);
+  view.append(g);
+}
+
+/* ---------- Khách hàng & Marketing ---------- */
+function pCustomers(view) {
+  const { cur: A, prev: Pv } = getAgg();
+  const booked = A.src.reduce((t, x) => t + x.booked, 0);
+  const paidSpend = A.spend, paidNew = PAID.reduce((t, i) => t + A.src[i].arrived, 0);
+  const paidRev = PAID.reduce((t, i) => t + A.src[i].rev, 0);
+  const pvPaidNew = Pv ? PAID.reduce((t, i) => t + Pv.src[i].arrived, 0) : null;
+  const k = el("div", { class: "kpis" });
+  k.append(
+    kpi("Khách tiềm năng (lead)", int(A.leads), A.leads, P_(Pv, "leads"), { kind: "count" }),
+    kpi("Khách mới đến khám", int(A.newArr), A.newArr, P_(Pv, "newArr"), { kind: "count" }),
+    kpi("Khách cũ quay lại", int(A.retArr), A.retArr, P_(Pv, "retArr"), { kind: "count" }),
+    kpi("Chi phí quảng cáo", A.spend, A.spend, P_(Pv, "spend"), { goodUp: false }),
+    kpi("Chi phí / khách mới (quảng cáo)", paidSpend / paidNew, paidSpend / paidNew, Pv ? Pv.spend / pvPaidNew : null, { goodUp: false }),
+    kpi("Doanh thu / chi phí QC", nf1.format(paidRev / paidSpend) + " lần", paidRev / paidSpend, Pv ? PAID.reduce((t, i) => t + Pv.src[i].rev, 0) / Pv.spend : null, { kind: "count" }),
+  );
+  view.append(k);
+  const g = el("div", { class: "grid" });
+  const steps = [
+    { label: "Khách tiềm năng", value: A.leads },
+    { label: "Đặt lịch hẹn", value: booked },
+    { label: "Đến khám, tư vấn", value: A.newArr },
+    { label: "Chốt điều trị", value: A.closed },
+  ];
+  const ramp = ["#86b6ef", "#5598e7", "#2a78d6", "#1c5cab"];
+  g.append(card(5, "Phễu khách mới", "Từ lead đến chốt điều trị, cộng mọi nguồn", {
+    draw: h => barChart(h, { rows: steps.map((st, i) => ({ ...st, color: ramp[i], tip: [{ k: "Số khách", v: int(st.value) }, { k: "So với bước trước", v: i ? pct(st.value / steps[i - 1].value) : "—" }, { k: "So với lead", v: pct(st.value / steps[0].value) }] })), fmt: int, labelW: 128 }),
+    table: () => ({ cols: [{ k: "label", n: "Bước" }, { k: "value", n: "Số khách", num: true, f: int }, { k: "cv", n: "Chuyển đổi từ bước trước", num: true, f: v => v == null ? "—" : pct(v) }], rows: steps.map((st, i) => ({ ...st, cv: i ? st.value / steps[i - 1].value : null })) }),
+  }).card);
+  const srcRows = SOURCES.map((n, i) => ({ label: n, value: A.src[i].arrived, color: SRC_COLOR[i] }));
+  g.append(card(7, "Khách mới theo nguồn", "Tổng khách mới đến khám trong kỳ", {
+    draw: h => barChart(h, { rows: srcRows.slice().sort((a, b) => b.value - a.value).map(r => ({ ...r, tip: [{ k: "Khách mới", v: int(r.value) }, { k: "Tỷ trọng", v: pct(r.value / A.newArr) }] })), fmt: int, labelW: 96 }),
+    table: () => ({ cols: [{ k: "label", n: "Nguồn" }, { k: "value", n: "Khách mới", num: true, f: int }], rows: srcRows }),
+  }).card);
+  const rows = SOURCES.map((n, i) => {
+    const x = A.src[i];
+    return { n, leads: x.leads, booked: x.booked, arrived: x.arrived, cr: x.closed / x.arrived, rev: x.rev, spend: x.spend, cac: x.spend ? x.spend / x.arrived : null, roas: x.spend ? x.rev / x.spend : null };
+  });
+  const tc = card(12, "Hiệu quả theo nguồn khách", "Chi phí chỉ có ở kênh quảng cáo trả phí. Doanh thu tính trên dịch vụ khách mới chốt trong kỳ");
+  tc.body.append(el("div", { class: "tablewrap" }, table({
+    cols: [
+      { k: "n", n: "Nguồn" }, { k: "leads", n: "Lead", num: true, f: int }, { k: "booked", n: "Đặt hẹn", num: true, f: int },
+      { k: "arrived", n: "Khách mới", num: true, f: int }, { k: "cr", n: "Tỷ lệ chốt", num: true, f: v => pct(v) },
+      { k: "rev", n: "Doanh thu", num: true, f: money, bar: true }, { k: "spend", n: "Chi phí QC", num: true, f: v => v ? money(v) : "—" },
+      { k: "cac", n: "Chi phí / khách mới", num: true, f: v => v ? money(v) : "—" }, { k: "roas", n: "Doanh thu / chi phí", num: true, f: v => v ? nf1.format(v) + " lần" : "—" },
+    ], rows,
+  })));
+  g.append(tc.card);
+  view.append(g);
+}
+
+/* ---------- Lịch hẹn ---------- */
+function pAppts(view) {
+  const { cur: A, prev: Pv } = getAgg();
+  const k = el("div", { class: "kpis" });
+  k.append(
+    kpi("Tổng lịch hẹn", int(A.appts), A.appts, P_(Pv, "appts"), { kind: "count" }),
+    kpi("Khách đã đến", int(A.arrived), A.arrived, P_(Pv, "arrived"), { kind: "count" }),
+    kpi("Tỷ lệ đến hẹn", pct(A.arriveRate), A.arriveRate, P_(Pv, "arriveRate"), { kind: "rate" }),
+    kpi("Hủy hẹn", int(A.cancelled), A.cancelled, P_(Pv, "cancelled"), { kind: "count", goodUp: false }),
+    kpi("Không đến", int(A.noshow), A.noshow, P_(Pv, "noshow"), { kind: "count", goodUp: false }),
+  );
+  view.append(k);
+  const g = el("div", { class: "grid" });
+  const ST = [{ name: "Đã đến", color: "var(--s1)" }, { name: "Hủy hẹn", color: "var(--s2)" }, { name: "Không đến", color: "var(--s3)" }];
+  g.append(card(12, "Lịch hẹn theo trạng thái", "Theo " + ({ day: "ngày", week: "tuần", month: "tháng" })[A.B.g], {
+    legend: ST,
+    draw: h => columnChart(h, { labels: A.B.list.map(b => b.label), fulls: A.B.list.map(b => b.full), series: ST.map((x, i) => ({ ...x, values: A.sStatus[i] })) }),
+    table: () => seriesTable(A, ST.map((x, i) => ({ k: "s" + i, n: x.name, v: A.sStatus[i], f: int }))),
+  }).card);
+  g.append(card(12, "Giờ cao điểm", "Số lượt khách đến theo thứ và khung giờ. Ô càng đậm càng đông", {
+    draw: h => heatmap(h, { matrix: A.heat, rowsL: WD, colsL: HOURS.map(x => x + "h") }),
+    table: () => ({ cols: [{ k: "w", n: "Thứ" }, ...HOURS.map((x, j) => ({ k: "h" + j, n: x + "h", num: true, f: int }))], rows: WD.map((w, i) => Object.assign({ w }, ...HOURS.map((_, j) => ({ ["h" + j]: A.heat[i][j] })))) }),
+  }).card);
+  view.append(g);
+}
+
+/* ---------- Bác sĩ ---------- */
+function pDoctors(view) {
+  const { cur: A } = getAgg();
+  const COMM = 0.1;
+  const rows = DOCTORS.map((d, i) => ({ ...d, ...A.doc[i], clinic: CLINICS[d.c].name, cr: A.doc[i].closed / A.doc[i].consult, comm: A.doc[i].rev * COMM }))
+    .filter(d => cset().has(d.c)).sort((a, b) => b.rev - a.rev);
+  const g = el("div", { class: "grid" });
+  g.append(card(12, "Doanh thu theo bác sĩ", "Doanh thu phát sinh từ dịch vụ do bác sĩ thực hiện", {
+    draw: h => barChart(h, { rows: rows.slice(0, 12).map(r => ({ label: r.name, value: r.rev, tip: [{ k: "Doanh thu", v: vnd(r.rev) }, { k: "Lượt khám", v: int(r.visits) }, { k: "Tỷ lệ chốt", v: pct(r.cr) }, { k: "Phòng khám", v: r.clinic }] })), labelW: 190 }),
+    table: () => ({ cols: [{ k: "name", n: "Bác sĩ" }, { k: "rev", n: "Doanh thu", num: true, f: vnd }], rows }),
+  }).card);
+  const tc = card(12, "Bảng hiệu suất bác sĩ", "Hoa hồng ước tính bằng 10% doanh thu. Tỷ lệ này cấu hình riêng được cho từng phòng khám");
+  tc.body.append(el("div", { class: "tablewrap" }, table({
+    cols: [
+      { k: "name", n: "Bác sĩ" }, ...(state.clinic === "all" ? [{ k: "clinic", n: "Phòng khám" }] : []),
+      { k: "visits", n: "Lượt khám", num: true, f: int }, { k: "consult", n: "Khách mới tư vấn", num: true, f: int },
+      { k: "cr", n: "Tỷ lệ chốt", num: true, f: v => pct(v) }, { k: "rev", n: "Doanh thu", num: true, f: money, bar: true },
+      { k: "comm", n: "Hoa hồng ước tính", num: true, f: money },
+    ], rows,
+  })));
+  g.append(tc.card);
+  view.append(g);
+}
+
+/* ---------- Tài chính ---------- */
+function pFinance(view) {
+  const { cur: A, prev: Pv } = getAgg();
+  const k = el("div", { class: "kpis" });
+  k.append(
+    kpi("Thực thu", A.collected, A.collected, P_(Pv, "collected"), { hero: true }),
+    kpi("Tổng chi", A.expense, A.expense, P_(Pv, "expense"), { goodUp: false }),
+    kpi("Chênh lệch thu – chi", A.profit, A.profit, P_(Pv, "profit")),
+    kpi("Công nợ phải thu", A.debt, A.debt, P_(Pv, "debt"), { goodUp: false }),
+    kpi("Giá trị trung bình / ca", A.avgTicket, A.avgTicket, P_(Pv, "avgTicket")),
+  );
+  view.append(k);
+  const g = el("div", { class: "grid" });
+  const TS = [{ name: "Thực thu", color: "var(--s1)" }, { name: "Chi", color: "var(--s2)" }];
+  g.append(card(8, "Thu và chi", "Theo " + ({ day: "ngày", week: "tuần", month: "tháng" })[A.B.g], {
+    legend: TS,
+    draw: h => columnChart(h, { labels: A.B.list.map(b => b.label), fulls: A.B.list.map(b => b.full), series: [{ ...TS[0], values: A.sCollected }, { ...TS[1], values: A.sExpense }], mode: "group", fmt: money, tipFmt: vnd }),
+    table: () => seriesTable(A, [{ k: "c", n: "Thực thu", v: A.sCollected, f: vnd }, { k: "e", n: "Chi", v: A.sExpense, f: vnd }, { k: "p", n: "Chênh lệch", v: A.sCollected.map((x, i) => x - A.sExpense[i]), f: vnd }]),
+  }).card);
+  const ex = EXP_CATS.map((n, i) => ({ label: n, value: A.expCat[i] })).sort((a, b) => b.value - a.value);
+  g.append(card(4, "Cơ cấu chi phí", "Theo hạng mục", {
+    draw: h => barChart(h, { rows: ex.map(r => ({ ...r, tip: [{ k: "Chi", v: vnd(r.value) }, { k: "Tỷ trọng", v: pct(r.value / A.expense) }] })), labelW: 120 }),
+    table: () => ({ cols: [{ k: "label", n: "Hạng mục" }, { k: "value", n: "Chi", num: true, f: vnd }], rows: ex }),
+  }).card);
+  const AG = ["≤ 30 ngày", "31–60 ngày", "61–90 ngày", "> 90 ngày"];
+  const agRows = AG.map((n, i) => ({ label: n, value: A.aging[i], color: ["#86b6ef", "#5598e7", "#2a78d6", "#1c5cab"][i] }));
+  g.append(card(6, "Tuổi công nợ", "Công nợ phải thu tại " + dmy(A.d1) + ", chia theo số ngày kể từ khi phát sinh", {
+    draw: h => barChart(h, { rows: agRows.map(r => ({ ...r, tip: [{ k: "Công nợ", v: vnd(r.value) }, { k: "Tỷ trọng", v: pct(r.value / A.debt) }] })), labelW: 96 }),
+    table: () => ({ cols: [{ k: "label", n: "Tuổi nợ" }, { k: "value", n: "Công nợ", num: true, f: vnd }], rows: agRows }),
+  }).card);
+  const pm = PAY_METHODS.map((n, i) => ({ label: n, value: A.payM[i] }));
+  g.append(card(6, "Hình thức thanh toán", "Tỷ trọng trên tổng thực thu", {
+    draw: h => barChart(h, { rows: pm.map(r => ({ ...r, tip: [{ k: "Thực thu", v: vnd(r.value) }, { k: "Tỷ trọng", v: pct(r.value / A.collected) }] })), labelW: 110 }),
+    table: () => ({ cols: [{ k: "label", n: "Hình thức" }, { k: "value", n: "Số tiền", num: true, f: vnd }], rows: pm }),
+  }).card);
+  view.append(g);
+}
+
+/* ---------- So sánh phòng khám ---------- */
+function pCompare(view) {
+  const pr = prevRange();
+  const rows = CLINICS.map((c, i) => {
+    const one = new Set([i]), A = agg(one, state.d0, state.d1), P = pr ? agg(one, pr[0], pr[1]) : null;
+    return { i, name: c.name, city: c.city, rev: A.revenue, growth: P && P.revenue ? A.revenue / P.revenue - 1 : null, coll: A.collected, newArr: A.newArr, cr: A.closeRate, ar: A.arriveRate, debt: A.debt, margin: A.collected ? A.profit / A.collected : null };
+  }).sort((a, b) => b.rev - a.rev);
+  const sel = r => state.clinic !== "all" && r.i === +state.clinic;
+  const g = el("div", { class: "grid" });
+  g.append(card(12, "Doanh thu phát sinh theo phòng khám", state.clinic === "all" ? "Toàn bộ phòng khám trong hệ thống" : "Phòng khám đang chọn được tô đậm, các phòng khám khác để đối chiếu", {
+    draw: h => barChart(h, { rows: rows.map(r => ({ label: r.name, value: r.rev, color: state.clinic === "all" || sel(r) ? "var(--s1)" : "color-mix(in oklab, var(--s1) 38%, var(--panel))", tip: [{ k: "Doanh thu", v: vnd(r.rev) }, { k: "Tăng trưởng", v: r.growth == null ? "—" : (r.growth >= 0 ? "+" : "") + pct(r.growth) }, { k: "Khách mới", v: int(r.newArr) }] })), labelW: 170 }),
+    table: () => ({ cols: [{ k: "name", n: "Phòng khám" }, { k: "rev", n: "Doanh thu", num: true, f: vnd }], rows }),
+  }).card);
+  const tc = card(12, "Bảng xếp hạng", "Tăng trưởng so với kỳ liền trước có cùng độ dài");
+  const growthCell = v => { if (v == null) return "—"; const sp = el("span", { class: "delta " + (v >= 0 ? "up" : "down"), text: (v >= 0 ? "▲ " : "▼ ") + pct(Math.abs(v)) }); return sp; };
+  tc.body.append(el("div", { class: "tablewrap" }, table({
+    sel,
+    cols: [
+      { k: "rank", n: "#", num: true }, { k: "name", n: "Phòng khám" }, { k: "city", n: "Tỉnh/TP" },
+      { k: "rev", n: "Doanh thu", num: true, f: money, bar: true }, { k: "growth", n: "Tăng trưởng", num: true, f: growthCell },
+      { k: "coll", n: "Thực thu", num: true, f: money }, { k: "newArr", n: "Khách mới", num: true, f: int },
+      { k: "cr", n: "Tỷ lệ chốt", num: true, f: v => pct(v) }, { k: "ar", n: "Đến hẹn", num: true, f: v => pct(v) },
+      { k: "debt", n: "Công nợ", num: true, f: money }, { k: "margin", n: "Biên thu – chi", num: true, f: v => v == null ? "—" : pct(v) },
+    ], rows: rows.map((r, j) => ({ ...r, rank: j + 1 })),
+  })));
+  g.append(tc.card);
+  view.append(g);
+}
+
+/* ---------- Kết nối dữ liệu ---------- */
+const METHOD = {
+  "Bambu": "Trình duyệt tự động, tải file Excel báo cáo",
+  "Nha Khoa Số Plus": "Đọc cơ sở dữ liệu qua agent tại phòng khám",
+  "SimlyDent": "API chính thức (gói Enterprise)",
+  "DentalFlow": "Trình duyệt tự động, tải file Excel báo cáo",
+  "VTTech": "API của phần mềm (gói Pro)",
+};
+const SYNC = [
+  ["ok", "Bình thường", 38, 0], ["ok", "Bình thường", 41, 0], ["ok", "Bình thường", 35, 0], ["ok", "Bình thường", 12, 0],
+  ["warn", "Chậm: agent tại phòng khám mất kết nối", 26 * 60, 0], ["ok", "Bình thường", 9, 0], ["ok", "Bình thường", 44, 0],
+  ["bad", "Lỗi: tài khoản bị đổi mật khẩu, cần cập nhật", 3 * 60 + 20, 1],
+];
+function ago(min) { return min < 60 ? min + " phút trước" : min < 48 * 60 ? Math.round(min / 60) + " giờ trước" : Math.round(min / 1440) + " ngày trước"; }
+function pSources(view) {
+  const ok = SYNC.filter(x => x[0] === "ok").length;
+  const k = el("div", { class: "kpis" });
+  const tile = (lab, val) => { const t = el("div", { class: "kpi" }); t.append(el("div", { class: "lab", text: lab }), el("div", { class: "val", text: val })); return t; };
+  k.append(tile("Phòng khám đang kết nối", String(CLINICS.length)), tile("Đồng bộ bình thường", ok + " / " + CLINICS.length), tile("Cần xử lý", String(CLINICS.length - ok)), tile("Phần mềm nguồn", String(new Set(CLINICS.map(c => c.sw)).size)));
+  view.append(k);
+  const g = el("div", { class: "grid" });
+  const counts = CLINICS.map((_, i) => ({ a: APPTS.filter(x => x.c === i).length, b: BILLS.filter(x => x.c === i).length + PAYS.filter(x => x.c === i).length }));
+  const tc = card(12, "Trạng thái đồng bộ", "Mỗi phòng khám cấp một tài khoản riêng tên dmag-baocao, chỉ có quyền xem báo cáo, không dùng tài khoản quản trị");
+  tc.body.append(el("div", { class: "tablewrap" }, table({
+    cols: [
+      { k: "name", n: "Phòng khám" }, { k: "sw", n: "Phần mềm nguồn", f: v => el("span", { class: "pill", text: v }) },
+      { k: "method", n: "Cách lấy dữ liệu", wrap: true },
+      { k: "last", n: "Lần đồng bộ cuối" }, { k: "st", n: "Trạng thái", wrap: true, f: (v, r) => statusEl(r.kind, v) },
+      { k: "rec", n: "Bản ghi đã đồng bộ", num: true, f: int },
+    ],
+    rows: CLINICS.map((c, i) => ({ name: c.name, sw: c.sw, method: METHOD[c.sw], last: ago(SYNC[i][2]), st: SYNC[i][1], kind: SYNC[i][0], rec: counts[i].a + counts[i].b })),
+  })));
+  g.append(tc.card);
+  const fc = card(12, "Luồng dữ liệu", "Dữ liệu từ mọi phần mềm được đưa về một mô hình chung trước khi tính chỉ số");
+  const flow = el("div", { class: "flow" });
+  [
+    ["Bước 1", "Thu thập", "Connector riêng cho từng phần mềm. Ưu tiên API, sau đó tải Excel, cuối cùng là đọc trang web."],
+    ["Bước 2", "Lưu bản gốc", "Giữ nguyên file và JSON tải về, mã hóa khi lưu, để kiểm tra lại khi số liệu lệch."],
+    ["Bước 3", "Chuẩn hóa", "Ánh xạ về mô hình chung: lịch hẹn, phiếu thu, phiếu chi, dịch vụ, bác sĩ, nguồn khách."],
+    ["Bước 4", "Tính chỉ số", "Mỗi chỉ số DMAG định nghĩa một lần và áp dụng cho mọi phòng khám."],
+    ["Bước 5", "Hiển thị", "Dashboard theo phòng khám, so sánh cả chuỗi, báo cáo gửi qua Zalo hoặc email."],
+  ].forEach(([e, b, t]) => flow.append(el("div", { class: "st" }, el("em", { text: e }), el("b", { text: b }), el("span", { text: t }))));
+  fc.body.append(flow);
+  g.append(fc.card);
+  view.append(g);
+}
+
+if (state.preset !== "custom") { const p = PRESETS.find(x => x.id === state.preset); if (p) [state.d0, state.d1] = p.r(); }
+render();
+})();
+</script>
+
+</body>
+</html>
